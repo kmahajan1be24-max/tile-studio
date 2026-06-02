@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TileStudio – See Your Floor Before You Buy</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#111827;color:#f9fafb;min-height:100vh;padding:16px}
+.wrap{max-width:580px;margin:0 auto}
+.hdr{background:linear-gradient(135deg,#1e1b4b,#1e3a5f);border-radius:16px;padding:28px 20px;text-align:center;margin-bottom:16px;border:1px solid #374151}
+.hdr h1{font-size:26px;font-weight:700;margin-bottom:6px}
+.hdr h1 span{background:linear-gradient(90deg,#818cf8,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr p{font-size:13px;color:#9ca3af;line-height:1.6}
+.pill{display:inline-block;margin-top:10px;padding:4px 14px;background:#1e3a5f;border:1px solid #38bdf8;border-radius:20px;font-size:11px;color:#38bdf8}
+.card{background:#1f2937;border-radius:14px;border:1px solid #374151;padding:16px;margin-bottom:14px}
+.card-lbl{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.row{display:flex;gap:8px}
+.row input{flex:1;padding:10px 12px;background:#111827;border:1px solid #374151;border-radius:9px;color:#f9fafb;font-size:13px;outline:none}
+.row input:focus{border-color:#818cf8}
+.row input::placeholder{color:#6b7280}
+.row button{padding:10px 14px;background:#111827;border:1px solid #374151;border-radius:9px;color:#9ca3af;cursor:pointer;font-size:12px;white-space:nowrap}
+.info{margin-top:10px;background:#052e16;border-radius:9px;padding:10px 12px;font-size:11px;color:#86efac;line-height:1.9;border:1px solid #14532d}
+.info a{color:#38bdf8;font-weight:600}
+.ugrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.ucard{background:#1f2937;border-radius:14px;border:1px solid #374151;padding:12px}
+.ucard-lbl{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.zone{border:2px dashed #374151;border-radius:10px;height:150px;position:relative;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:#111827;transition:border-color .2s}
+.zone:hover{border-color:#818cf8}
+.zone input{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:4;width:100%;height:100%}
+.zone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:8px;display:none;z-index:2}
+.zone-icon{font-size:32px;z-index:1}
+.zone-txt{font-size:11px;color:#6b7280;text-align:center;line-height:1.5;z-index:1}
+.zone.filled .zone-icon,.zone.filled .zone-txt{display:none}
+.extra-input{width:100%;padding:10px 12px;background:#111827;border:1px solid #374151;border-radius:9px;color:#f9fafb;font-size:13px;font-family:inherit;outline:none}
+.extra-input:focus{border-color:#818cf8}
+.extra-input::placeholder{color:#6b7280}
+.go-btn{width:100%;padding:15px;background:linear-gradient(90deg,#6366f1,#38bdf8);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:16px;transition:opacity .2s,transform .1s}
+.go-btn:hover:not(:disabled){opacity:.9;transform:translateY(-1px)}
+.go-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.loading{display:none;background:#1f2937;border-radius:14px;border:1px solid #374151;padding:32px;text-align:center;margin-bottom:14px}
+.spin{width:44px;height:44px;border:4px solid #374151;border-top-color:#818cf8;border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{font-size:14px;color:#9ca3af}
+.loading small{font-size:11px;color:#6b7280;margin-top:6px;display:block}
+.errbox{display:none;background:#1c0a0a;border:1px solid #7f1d1d;border-radius:12px;padding:14px;margin-bottom:14px;font-size:13px;color:#fca5a5;line-height:1.7}
+.result-wrap{display:none;margin-bottom:16px}
+.sec-lbl{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.slider-box{position:relative;border-radius:14px;overflow:hidden;border:1px solid #374151;cursor:ew-resize;touch-action:none}
+.slider-box .img-before{display:block;width:100%;max-height:380px;object-fit:cover}
+.after-clip{position:absolute;top:0;left:0;width:50%;height:100%;overflow:hidden;pointer-events:none}
+.after-clip .img-after{display:block;width:200%;max-height:380px;object-fit:cover}
+.divider-line{position:absolute;top:0;left:50%;width:3px;height:100%;background:#fff;transform:translateX(-50%);pointer-events:none}
+.divider-btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:38px;height:38px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.tag-before{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.75);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px}
+.tag-after{position:absolute;top:10px;right:10px;background:rgba(99,102,241,.9);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px}
+.scores-card{background:#1f2937;border-radius:14px;border:1px solid #374151;padding:16px;margin-top:12px}
+.srow{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.srow:last-child{margin-bottom:0}
+.slbl{font-size:12px;color:#9ca3af;width:105px;flex-shrink:0}
+.sbar{flex:1;height:7px;background:#374151;border-radius:4px;overflow:hidden}
+.sfill{height:100%;border-radius:4px;width:0;transition:width .9s ease}
+.sval{font-size:12px;font-weight:700;width:34px;text-align:right}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.tag{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700}
+.tg{background:#052e16;color:#4ade80}.tw{background:#1c1003;color:#fbbf24}.tb{background:#1c0505;color:#f87171}
+.ai-desc{background:#111827;border-radius:10px;padding:14px;font-size:13px;color:#d1d5db;line-height:1.8;margin-top:12px}
+.ai-desc strong{color:#a5b4fc}
+.rec{margin-top:12px;padding:12px 14px;border-radius:10px;font-size:13px;font-weight:700;line-height:1.5}
+.reset-btn{width:100%;padding:12px;background:transparent;border:1px solid #374151;border-radius:12px;color:#9ca3af;cursor:pointer;font-size:13px;margin-bottom:20px;font-family:inherit}
+.reset-btn:hover{background:#1f2937;color:#f9fafb}
+.footer{text-align:center;font-size:11px;color:#4b5563;padding-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <h1>🪟 <span>TileStudio</span></h1>
+    <p>Upload your room + tile photo<br>See exactly how your floor looks with new tiles</p>
+    <span class="pill">✦ Before & After Visual + AI Analysis</span>
+  </div>
+
+  <div class="card">
+    <div class="card-lbl">🔑 Google Gemini API Key — Free</div>
+    <div class="row">
+      <input type="password" id="K" placeholder="Paste your key: AIzaSy..." oninput="chk()">
+      <button onclick="togK(this)">Show</button>
+    </div>
+    <div class="info">
+      <strong>Get FREE key (1 minute):</strong><br>
+      1. Open → <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a><br>
+      2. Sign in with Gmail → Click <strong>"Create API Key"</strong> → Copy<br>
+      3. Paste above ✅ &nbsp;·&nbsp; 🟢 Free · No credit card ever
+    </div>
+  </div>
+
+  <div class="ugrid">
+    <div class="ucard">
+      <div class="ucard-lbl">📷 Your Room</div>
+      <div class="zone" id="RZ">
+        <input type="file" accept="image/*" onchange="load('R',this)">
+        <img id="RI">
+        <div class="zone-icon">🏠</div>
+        <div class="zone-txt">Tap to upload<br>room photo</div>
+      </div>
+    </div>
+    <div class="ucard">
+      <div class="ucard-lbl">⬛ Tile Sample</div>
+      <div class="zone" id="TZ">
+        <input type="file" accept="image/*" onchange="load('T',this)">
+        <img id="TI">
+        <div class="zone-icon">🪟</div>
+        <div class="zone-txt">Tap to upload<br>tile photo</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-lbl">Room Details (optional)</div>
+    <input class="extra-input" id="EX" type="text" placeholder="e.g. 10×12 kitchen, white cabinets, modern style...">
+  </div>
+
+  <button class="go-btn" id="GB" disabled onclick="go()">✦ Show Me How It Looks</button>
+  <div class="errbox" id="EB"></div>
+  <div class="loading" id="LD">
+    <div class="spin"></div>
+    <p>Analyzing your room and tile...</p>
+    <small>Sending images to AI · Rendering tile on floor</small>
+  </div>
+
+  <div class="result-wrap" id="RES">
+    <div class="sec-lbl">← Drag the slider to compare →</div>
+    <div class="slider-box" id="SB">
+      <img class="img-before" id="IB">
+      <div class="after-clip" id="AC"><img class="img-after" id="IA"></div>
+      <div class="divider-line" id="DL"><div class="divider-btn">⇔</div></div>
+      <div class="tag-before">BEFORE</div>
+      <div class="tag-after">WITH NEW TILE</div>
+    </div>
+    <div class="scores-card">
+      <div id="SC"></div>
+      <div class="tags" id="TG"></div>
+      <div class="ai-desc" id="AD"></div>
+      <div class="rec" id="RC"></div>
+    </div>
+  </div>
+
+  <button class="reset-btn" id="RST" style="display:none" onclick="rst()">↩ Try another tile</button>
+  <div class="footer">TileStudio · AI Tile Visualizer</div>
+</div>
+
+<script>
+var rB=null,rM='image/jpeg',tB=null,tM='image/jpeg',rSrc=null;
+// ⬇️ PASTE YOUR RENDER URL HERE after deploying (e.g. https://tilestudio-xyz.onrender.com)
+var SERVER_URL = 'PASTE_YOUR_RENDER_URL_HERE';
+
+function load(w,inp){
+  var f=inp.files[0];if(!f)return;
+  var m=f.type||'image/jpeg';
+  var rd=new FileReader();
+  rd.onload=function(e){
+    var src=e.target.result,b64=src.split(',')[1];
+    var img=g(w+'I'),zone=g(w+'Z');
+    img.src=src;img.style.display='block';
+    zone.classList.add('filled');
+    if(w==='R'){rB=b64;rM=m;rSrc=src;}else{tB=b64;tM=m;}
+    chk();
+  };
+  rd.readAsDataURL(f);
+}
+
+function chk(){
+  var k=g('K').value.trim();
+  g('GB').disabled=!(rB&&tB&&k.length>10);
+}
+
+function togK(btn){
+  var i=g('K');
+  i.type=i.type==='password'?'text':'password';
+  btn.textContent=i.type==='password'?'Show':'Hide';
+}
+
+function sc(v){return v>=75?'#4ade80':v>=50?'#fbbf24':'#f87171';}
+
+async function go(){
+  var key=g('K').value.trim();
+  var extra=g('EX').value.trim();
+  g('GB').style.display='none';
+  g('RES').style.display='none';
+  g('RST').style.display='none';
+  g('EB').style.display='none';
+  g('LD').style.display='block';
+
+  var prompt='You are an interior design expert. Image 1 = a room. Image 2 = a tile sample.'+(extra?' Room info: '+extra+'.':'')+' Reply with ONLY a JSON object, nothing else. Format: {"overall":75,"color":70,"style":80,"lighting":65,"texture":70,"description":"The room will look warm with this tile adding elegance to the floor.","recommendation":"Yes this tile works well here.","tags":["Warm tones","Modern look","Good contrast"]}';
+
+  try{
+    // Use proxy server to avoid CORS
+    var useProxy = SERVER_URL && SERVER_URL !== 'PASTE_YOUR_RENDER_URL_HERE';
+    var data;
+
+    if(useProxy){
+      var resp=await fetch(SERVER_URL+'/analyze',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          key:key,
+          parts:[
+            {inline_data:{mime_type:rM,data:rB}},
+            {inline_data:{mime_type:tM,data:tB}},
+            {text:prompt}
+          ]
+        })
+      });
+      data=await resp.json();
+    } else {
+      // Direct call (works on localhost or if CORS allowed)
+      var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key='+key,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          contents:[{parts:[
+            {inline_data:{mime_type:rM,data:rB}},
+            {inline_data:{mime_type:tM,data:tB}},
+            {text:prompt}
+          ]}],
+          generationConfig:{temperature:0.2,maxOutputTokens:400,responseMimeType:'application/json'}
+        })
+      });
+      data=await resp.json();
+    }
+
+    if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
+
+    var txt='';
+    if(useProxy){
+      txt=data.candidates[0].content.parts[0].text.trim();
+    } else {
+      txt=data.candidates[0].content.parts[0].text.trim();
+    }
+
+    var parsed;
+    try{parsed=JSON.parse(txt);}
+    catch(e){
+      var s=txt.indexOf('{'),en=txt.lastIndexOf('}');
+      if(s<0||en<0)throw new Error('AI returned unexpected format. Please try again.');
+      parsed=JSON.parse(txt.substring(s,en+1));
+    }
+
+    g('LD').style.display='none';
+    render(parsed);
+
+  }catch(err){
+    g('LD').style.display='none';
+    g('GB').style.display='block';
+    var msg=err.message||'Unknown error';
+    if(msg.includes('fetch')||msg.includes('Failed')||msg.includes('Network'))
+      msg='CORS error: The app needs a backend server. See setup instructions below or deploy the server to Render.com.';
+    if(msg.includes('quota')||msg.includes('QUOTA'))
+      msg='Quota exceeded. Create a new Gmail account and get a fresh free key at aistudio.google.com/apikey';
+    if(msg.includes('API_KEY')||msg.includes('key not valid'))
+      msg='Invalid API key. Get your free key from aistudio.google.com/apikey';
+    g('EB').innerHTML='❌ '+msg;
+    g('EB').style.display='block';
+  }
+}
+
+function render(r){
+  g('IB').src=rSrc;
+  buildOverlay(rSrc,function(url){
+    g('IA').src=url;
+    initSlider();
+  });
+
+  var scores=[
+    ['Overall match',r.overall||50],
+    ['Color harmony',r.color||50],
+    ['Style fit',r.style||50],
+    ['Lighting',r.lighting||50],
+    ['Texture fit',r.texture||50]
+  ];
+  g('SC').innerHTML=scores.map(function(s){
+    var id='sf'+s[0].replace(/\s/g,'');
+    return '<div class="srow"><div class="slbl">'+s[0]+'</div><div class="sbar"><div class="sfill" id="'+id+'" style="background:'+sc(s[1])+'"></div></div><div class="sval" style="color:'+sc(s[1])+'">'+s[1]+'%</div></div>';
+  }).join('');
+  setTimeout(function(){
+    scores.forEach(function(s){
+      var el=document.getElementById('sf'+s[0].replace(/\s/g,''));
+      if(el)el.style.width=s[1]+'%';
+    });
+  },120);
+
+  g('TG').innerHTML=(r.tags||[]).map(function(t){return '<span class="tag tg">'+t+'</span>';}).join('');
+  g('AD').innerHTML='<strong>🎨 How your room will look with this tile:</strong><br><br>'+(r.description||'');
+
+  var o=r.overall||50;
+  var rc=o>=65?'#4ade80':o>=45?'#fbbf24':'#f87171';
+  var rb=o>=65?'#052e16':o>=45?'#1c1003':'#1c0505';
+  var lbl=o>=75?'✦ Excellent Match':o>=65?'✓ Good Match':o>=45?'~ Fair Match':'✗ Poor Match';
+  g('RC').style.cssText='background:'+rb+';color:'+rc+';border-radius:10px;padding:12px 14px;';
+  g('RC').textContent=lbl+' — '+(r.recommendation||'');
+
+  g('RES').style.display='block';
+  g('RST').style.display='block';
+  g('RES').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function buildOverlay(src,cb){
+  var c=document.createElement('canvas'),ctx=c.getContext('2d'),ri=new Image();
+  ri.onload=function(){
+    c.width=ri.width;c.height=ri.height;
+    ctx.drawImage(ri,0,0);
+    var ti=new Image();
+    ti.onload=function(){
+      var ft=ri.height*0.44;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(ri.width*0.05,ft);
+      ctx.lineTo(ri.width*0.95,ft);
+      ctx.lineTo(ri.width*1.1,ri.height*1.1);
+      ctx.lineTo(-ri.width*0.1,ri.height*1.1);
+      ctx.closePath();
+      ctx.clip();
+      ctx.globalAlpha=0.86;
+      var tw=Math.round(ri.width/5),th=Math.round(tw*0.72);
+      for(var y=ft;y<ri.height+th;y+=th)
+        for(var x=-tw;x<ri.width+tw;x+=tw)
+          ctx.drawImage(ti,x,y,tw,th);
+      ctx.restore();
+      var grad=ctx.createLinearGradient(0,ft,0,ft+60);
+      grad.addColorStop(0,'rgba(0,0,0,0.3)');
+      grad.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=grad;ctx.fillRect(0,ft,ri.width,60);
+      cb(c.toDataURL('image/jpeg',0.92));
+    };
+    ti.onerror=function(){cb(src);};
+    ti.src='data:'+tM+';base64,'+tB;
+  };
+  ri.onerror=function(){cb(src);};
+  ri.src=src;
+}
+
+function initSlider(){
+  var box=g('SB'),ac=g('AC'),dl=g('DL'),drag=false;
+  function move(x){
+    var r=box.getBoundingClientRect();
+    var p=Math.min(Math.max((x-r.left)/r.width*100,4),96);
+    ac.style.width=p+'%';dl.style.left=p+'%';
+  }
+  box.addEventListener('mousedown',function(e){drag=true;move(e.clientX);});
+  window.addEventListener('mousemove',function(e){if(drag)move(e.clientX);});
+  window.addEventListener('mouseup',function(){drag=false;});
+  box.addEventListener('touchstart',function(e){drag=true;move(e.touches[0].clientX);},{passive:true});
+  window.addEventListener('touchmove',function(e){if(drag)move(e.touches[0].clientX);},{passive:true});
+  window.addEventListener('touchend',function(){drag=false;});
+}
+
+function rst(){
+  rB=null;tB=null;rSrc=null;
+  ['R','T'].forEach(function(w){
+    var i=g(w+'I');i.src='';i.style.display='none';
+    g(w+'Z').classList.remove('filled');
+    g(w+'Z').querySelector('input').value='';
+  });
+  g('RES').style.display='none';g('RST').style.display='none';
+  g('EB').style.display='none';g('GB').style.display='block';
+  chk();window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function g(id){return document.getElementById(id);}
+</script>
+</body>
+</html>
